@@ -1,0 +1,14 @@
+{
+  "id": "com.flickertalk.location",
+  "name": "Location",
+  "version": "1.0.0",
+  "minCoreVersion": "1.3.0",
+  "components": [
+    "ft-location"
+  ],
+  "permissions": {
+    "location": true,
+    "send": "propose"
+  },
+  "summary": "Send where you are, once, as a message; no map servers, nothing kept."
+}
