@@ -2,6 +2,7 @@
   "id": "com.flickertalk.location",
   "name": "Location",
   "version": "1.0.0",
+  "icon": "location-outline",
   "minCoreVersion": "1.3.0",
   "components": [
     "ft-location"
