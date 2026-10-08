@@ -74,6 +74,28 @@ describe("the manifest", () => {
     expect(typeof manifest.summary).toBe("string");
     expect(manifest.summary.length).toBeLessThanOrEqual(200);
   });
+
+  // The catalogue copies these, so the app shows the plugin in the phone's language before it is
+  // installed; the web's catalogue test refuses an entry without them (2026-10-08).
+  const LOCALES = ["es", "pt", "fr", "de", "it", "ro", "ru", "uk", "pl", "tr", "ar", "hi", "bn", "id", "vi", "th", "ja", "ko", "zh-CN", "zh-TW"];
+  const codePoints = (text) => [...text].length;
+
+  it("names and sums up the plugin in the 20 other languages of the app, within the SDK's limits", () => {
+    expect(Object.keys(manifest.locales ?? {})).toEqual(LOCALES);
+    for (const lang of LOCALES) {
+      const { name, summary, ...rest } = manifest.locales[lang];
+      expect(rest, lang).toEqual({});
+      expect(codePoints(summary.trim()), lang).toBeGreaterThan(0);
+      expect(codePoints(summary), lang).toBeLessThanOrEqual(200);
+      expect(codePoints(name.trim()), lang).toBeGreaterThan(0);
+      expect(codePoints(name), lang).toBeLessThanOrEqual(64);
+    }
+  });
+
+  it("calls the plugin in each language what the plugin calls itself", () => {
+    for (const lang of LOCALES) expect(manifest.locales[lang].name, lang).toBe(catalogueOf(lang).title);
+    expect(manifest.name).toBe(catalogueOf("en").title);
+  });
 });
 
 describe("the catalogue", () => {
