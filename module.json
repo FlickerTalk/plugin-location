@@ -11,5 +11,87 @@
     "location": true,
     "send": "propose"
   },
-  "summary": "Send where you are, once, as a message; no map servers, nothing kept."
+  "summary": "Send where you are, once, as a message; no map servers, nothing kept.",
+  "locales": {
+    "es": {
+      "name": "Ubicación",
+      "summary": "Envía dónde estás, una vez, como un mensaje; sin servidores de mapas, sin guardar nada."
+    },
+    "pt": {
+      "name": "Localização",
+      "summary": "Envie onde está, uma vez, como uma mensagem; sem servidores de mapas, nada fica guardado."
+    },
+    "fr": {
+      "name": "Position",
+      "summary": "Envoyez où vous êtes, une fois, dans un message ; aucun serveur de cartes, rien n'est conservé."
+    },
+    "de": {
+      "name": "Standort",
+      "summary": "Sende einmal als Nachricht, wo du bist; keine Kartenserver, nichts wird gespeichert."
+    },
+    "it": {
+      "name": "Posizione",
+      "summary": "Invia dove sei, una volta, come messaggio; nessun server di mappe, niente viene conservato."
+    },
+    "ro": {
+      "name": "Locație",
+      "summary": "Trimite unde ești, o singură dată, ca mesaj; fără servere de hărți, nu se păstrează nimic."
+    },
+    "ru": {
+      "name": "Местоположение",
+      "summary": "Отправьте, где вы находитесь, один раз, сообщением; без картографических серверов, ничего не хранится."
+    },
+    "uk": {
+      "name": "Місцезнаходження",
+      "summary": "Надішліть, де ви є, один раз, повідомленням; без картографічних серверів, нічого не зберігається."
+    },
+    "pl": {
+      "name": "Lokalizacja",
+      "summary": "Wyślij, gdzie jesteś, jeden raz, jako wiadomość; bez serwerów map, nic nie jest przechowywane."
+    },
+    "tr": {
+      "name": "Konum",
+      "summary": "Bulunduğunuz yeri bir kez, mesaj olarak gönderin; harita sunucusu yok, hiçbir şey saklanmaz."
+    },
+    "ar": {
+      "name": "الموقع",
+      "summary": "أرسل مكانك مرة واحدة في رسالة؛ بلا خوادم خرائط، ولا يُحفظ شيء."
+    },
+    "hi": {
+      "name": "स्थान",
+      "summary": "आप जहाँ हैं, उसे एक बार संदेश के रूप में भेजें; कोई मैप सर्वर नहीं, कुछ भी सहेजा नहीं जाता।"
+    },
+    "bn": {
+      "name": "অবস্থান",
+      "summary": "আপনি কোথায় আছেন, একবার বার্তা হিসেবে পাঠান; কোনো ম্যাপ সার্ভার নেই, কিছুই রাখা হয় না।"
+    },
+    "id": {
+      "name": "Lokasi",
+      "summary": "Kirim posisi Anda, sekali, sebagai pesan; tanpa server peta, tidak ada yang disimpan."
+    },
+    "vi": {
+      "name": "Vị trí",
+      "summary": "Gửi nơi bạn đang ở, một lần, dưới dạng tin nhắn; không máy chủ bản đồ, không lưu lại gì."
+    },
+    "th": {
+      "name": "ตำแหน่ง",
+      "summary": "ส่งตำแหน่งที่คุณอยู่ครั้งเดียวเป็นข้อความ ไม่ใช้เซิร์ฟเวอร์แผนที่ ไม่เก็บอะไรไว้"
+    },
+    "ja": {
+      "name": "位置情報",
+      "summary": "今いる場所を一度だけメッセージとして送ります。地図サーバーは使わず、何も保存しません。"
+    },
+    "ko": {
+      "name": "위치",
+      "summary": "지금 있는 곳을 한 번, 메시지로 보냅니다. 지도 서버 없이, 아무것도 저장하지 않습니다."
+    },
+    "zh-CN": {
+      "name": "位置",
+      "summary": "以消息形式发送你所在的位置，仅一次；不使用地图服务器，不保存任何内容。"
+    },
+    "zh-TW": {
+      "name": "位置",
+      "summary": "以訊息形式傳送你所在的位置，僅一次；不使用地圖伺服器，不保存任何內容。"
+    }
+  }
 }
