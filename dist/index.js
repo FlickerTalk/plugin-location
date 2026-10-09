@@ -33,47 +33,39 @@ export function accuracyLabel(accuracy) {
 const escape = (text) =>
   String(text).replace(/[&<>"']/g, (one) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[one]);
 
+// Ionic draws the window (the app lends it to the frame, app 1.6.0); this is only what is the
+// tool's own: how the one big button and what came of it sit. The colours are the app's, through
+// Ionic's variables, in light and dark.
 const STYLE = `
-:host { display: block; font: 15px system-ui, sans-serif; color: #111; --soft: #666; --accent: #e0562b; }
-@media (prefers-color-scheme: dark) { :host { color: #f4f4f4; --soft: #aaa; } }
-:host([dark]) { color: #f4f4f4; --soft: #aaa; }
-* { box-sizing: border-box; }
-.bar { display: flex; justify-content: flex-end; padding: 4px 0 10px; }
-button {
-  appearance: none; border: 1px solid currentColor; background: transparent; color: inherit;
-  border-radius: 10px; min-width: 44px; height: 40px; font: inherit; padding: 0 10px; cursor: pointer; opacity: .8;
-}
-button:disabled { cursor: default; opacity: .5; }
-.main { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 0 24px; text-align: center; }
-button.big {
-  width: 100%; max-width: 360px; height: auto; min-height: 96px; border-radius: 18px; opacity: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 17px; font-weight: 600;
-  box-shadow: inset 0 0 0 2px currentColor;
-}
-.pin { font-size: 36px; line-height: 1; }
-.spinner {
-  width: 28px; height: 28px; border-radius: 50%; border: 3px solid currentColor; border-top-color: transparent;
-  animation: spin 0.9s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
-.status { min-height: 1.4em; margin: 0; }
-.status.warn { color: var(--accent); }
-.accuracy { font-size: 22px; font-weight: 600; }
-.hint { color: var(--soft); font-size: 13px; margin: 0; max-width: 360px; }
-.i {
-  display: block; width: 22px; height: 22px; margin: auto; background: currentColor;
+ft-location { display: flex; flex-direction: column; height: 100%; font: 15px system-ui, sans-serif; }
+ft-location ion-content { flex: 1; }
+ft-location .main { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 0 24px; text-align: center; }
+ft-location .big { width: 100%; max-width: 360px; height: auto; min-height: 96px; margin: 0; --border-radius: 18px; font-size: 17px; font-weight: 600; }
+ft-location .big .inside { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; }
+ft-location .big .ft-i { width: 36px; height: 36px; }
+ft-location .big ion-icon { font-size: 36px; }
+ft-location .status { min-height: 1.4em; margin: 0; }
+ft-location .status.warn { color: var(--ion-color-danger, #e0562b); }
+ft-location .accuracy { font-size: 22px; font-weight: 600; }
+ft-location .hint { color: var(--ion-color-medium, #666); font-size: 13px; margin: 0; max-width: 360px; }
+ft-location .ft-i {
+  display: block; width: 22px; height: 22px; background: currentColor;
   -webkit-mask: var(--i) center/contain no-repeat; mask: var(--i) center/contain no-repeat;
 }
 `;
 
-const icon = (name) => `<i class="i" style="--i:url(./icon/${name}.svg)" aria-hidden="true"></i>`;
+/** An Ionicon: Ionic's own `ion-icon` when the app lent it by name, else the one the app serves
+ *  at `./icon/<name>.svg`, painted in the button's colour. Never a picture of ours, never an emoji. */
+const icon = (name, slot = "") =>
+  globalThis.Ionicons?.map?.has(name)
+    ? `<ion-icon ${slot ? `slot="${slot}" ` : ""}name="${name}" aria-hidden="true"></ion-icon>`
+    : `<i ${slot ? `slot="${slot}" ` : ""}class="ft-i" style="--i:url(./icon/${name}.svg)" aria-hidden="true"></i>`;
 
-/** The plugin's one screen: a big button, and what came of pressing it. */
+/** The plugin's one screen: a big button, and what came of pressing it. No bar of its own: the
+ *  app's tool window has the name and the ✕ (2026-10-09). */
 class Location extends HTMLElement {
   constructor() {
     super();
-    this.root = this.attachShadow({ mode: "open" });
     this.lang = "en";
     // `idle`, `finding` (waiting for the core), `found` or `failed`.
     this.state = "idle";
@@ -81,9 +73,23 @@ class Location extends HTMLElement {
   }
 
   connectedCallback() {
-    this.root.innerHTML = `<style>${STYLE}</style><div class="view"></div>`;
-    this.view = this.root.querySelector(".view");
-    this.root.addEventListener("click", (event) => this.onClick(event));
+    // In the page, not in a shadow root: the frame holds only this tool, and Ionic's global
+    // styles (colours, typography) do not cross a shadow boundary. Drawn once: Ionic draws a
+    // button once, and drawing it again on every change would make it flash.
+    this.innerHTML = `<style>${STYLE}</style>
+      <ion-content class="ion-padding">
+        <div class="main">
+          <ion-button data-act="send" class="big" fill="outline" expand="block">
+            <span class="inside">${icon("location-outline")}<span class="label"></span></span>
+          </ion-button>
+          <div role="status" aria-live="polite"></div>
+          <p class="hint"></p>
+        </div>
+      </ion-content>`;
+    this.send = this.querySelector('[data-act="send"]');
+    this.statusEl = this.querySelector("[role='status']");
+    this.hintEl = this.querySelector(".hint");
+    this.addEventListener("click", (event) => this.onClick(event));
     globalThis.ft?.onOpen?.((opening) => this.onOpen(opening));
     this.paint();
   }
@@ -95,11 +101,10 @@ class Location extends HTMLElement {
   }
 
   async onClick(event) {
-    const button = event.target.closest("button");
-    if (!button) return;
+    const button = event.target.closest("ion-button");
+    if (!button || button.disabled) return;
     const { act } = button.dataset;
     if (act === "send" || act === "retry") await this.locate();
-    else if (act === "close") globalThis.ft.close();
   }
 
   /** Asks the core for the position once, and hands it to the composer as a geo URI. */
@@ -125,28 +130,22 @@ class Location extends HTMLElement {
   }
 
   paint() {
-    if (!this.view) return;
+    if (!this.send) return;
     const T = (key) => escape(t(this.lang, key));
     const finding = this.state === "finding";
     let status = "";
-    if (finding) status = `<div class="spinner" aria-hidden="true"></div><p class="status">${T("finding")}</p>`;
+    if (finding) status = `<ion-spinner aria-hidden="true"></ion-spinner><p class="status">${T("finding")}</p>`;
     else if (this.state === "found") {
       status = `<p class="accuracy">${escape(accuracyLabel(this.accuracy))}</p><p class="status">${T("found")}</p>`;
     } else if (this.state === "failed") {
       status = `<p class="status warn">${T("unavailable")}</p>
-        <button data-act="retry" aria-label="${T("retry")}">${icon("refresh-outline")}</button>`;
+        <ion-button data-act="retry" fill="clear" aria-label="${T("retry")}">${icon("refresh-outline", "icon-only")}</ion-button>`;
     }
-    this.view.innerHTML = `
-      <div class="bar">
-        <button data-act="close" aria-label="${T("close")}">${icon("close-outline")}</button>
-      </div>
-      <div class="main">
-        <button data-act="send" class="big" aria-label="${T("send")}" ${finding ? "disabled" : ""}>
-          <span class="pin" aria-hidden="true">📍</span><span>${T("send")}</span>
-        </button>
-        <div role="status" aria-live="polite">${status}</div>
-        <p class="hint">${T("privacy")}</p>
-      </div>`;
+    this.send.setAttribute("aria-label", t(this.lang, "send"));
+    this.send.querySelector(".label").textContent = t(this.lang, "send");
+    this.send.disabled = finding;
+    this.statusEl.innerHTML = status;
+    this.hintEl.textContent = t(this.lang, "privacy");
   }
 }
 
