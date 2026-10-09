@@ -2,7 +2,7 @@
 
 **Location** for [FlickerTalk](https://flickertalk.com): send where you are, once, as a message.
 
-One screen, one big button: **📍 Send my location**. The plugin asks the phone for the current
+One screen, one big button: **Send my location**. The plugin asks the phone for the current
 position once, shows how accurate it is (`±20 m`) and puts it in the message box. You are the one
 who presses send. If the phone gives no position (location off, or the permission refused), it
 says so and offers to try again.
@@ -46,6 +46,12 @@ npm test
 English as the source (a test checks every language has the same keys). There is nothing to build.
 The `.ftplugin` package is signed by the FlickerTalk catalogue, not here. The contract is in
 [plugin-sdk](https://github.com/FlickerTalk/plugin-sdk).
+
+Since 1.0.2 the screen sits in the Ionic wrappers the app lends to the frame (`ion-content`,
+Ionic's buttons, spinner and icons), so it looks like the rest of FlickerTalk; it has no bar of
+its own, since the app's tool window already shows the name and the close button. It asks for app
+1.6.0 (`minCoreVersion`) and the package carries no Ionic: `@ionic/core` is only a
+`devDependency`, so the tests draw what the phone draws.
 
 ## License
 
