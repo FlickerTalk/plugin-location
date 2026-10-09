@@ -1,10 +1,10 @@
 // The plugin's own tests: the geo URI it writes (RFC 5870), the manifest it ships, the catalogue
 // of texts, and the one flow it has (ask the core once, put the place in the composer) against a
 // fake core.
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { accuracyLabel, geoUri } from "./dist/index.js";
 import { LANGUAGES, catalogueOf, t } from "./dist/i18n.js";
 
@@ -147,7 +147,10 @@ const HERE = { lat: 40.4168, lon: -3.7038, accuracy: 19.2, at: 1_759_000_000_000
 describe("the plugin", () => {
   let core;
   let element;
-  const inside = () => element.shadowRoot;
+  // The tool draws in the page: Ionic's styles do not cross a shadow root.
+  const inside = () => element;
+  // Ionic moves a button's first aria attributes to the native button inside it once it has drawn.
+  const aria = (one, name) => one.getAttribute(name) ?? one.shadowRoot?.querySelector("button")?.getAttribute(name);
   const button = (act) => inside().querySelector(`[data-act="${act}"]`);
   const press = async (act) => {
     button(act).click();
@@ -169,7 +172,7 @@ describe("the plugin", () => {
 
   it("shows one big button, labelled in the language of the app", async () => {
     await mount(async () => HERE, { lang: "es" });
-    expect(button("send").getAttribute("aria-label")).toBe(t("es", "send"));
+    expect(aria(button("send"), "aria-label")).toBe(t("es", "send"));
     expect(button("send").disabled).toBe(false);
     expect(core.ft.location).not.toHaveBeenCalled();
   });
@@ -203,7 +206,7 @@ describe("the plugin", () => {
     expect(core.ft.say).not.toHaveBeenCalled();
     expect(inside().textContent).toContain(t("en", "unavailable"));
     expect(button("retry")).not.toBeNull();
-    expect(button("retry").getAttribute("aria-label")).toBe(t("en", "retry"));
+    expect(aria(button("retry"), "aria-label")).toBe(t("en", "retry"));
     await press("retry");
     expect(core.ft.location).toHaveBeenCalledTimes(2);
     expect(core.ft.say).toHaveBeenCalledWith("geo:40.41680,-3.70380;u=20");
@@ -229,11 +232,83 @@ describe("the plugin", () => {
     expect(inside().textContent).toContain(t("en", "unavailable"));
   });
 
-  it("closes when asked", async () => {
+  // The app's tool window has its own ✕ and the plugin's name (and Android's Back): the tool's own
+  // ✕ was a duplicate, and was all its bar had (2026-10-09).
+  it("leaves closing to the app's window: no ✕ and no bar of its own", async () => {
     await mount(async () => HERE);
-    expect(button("close").getAttribute("aria-label")).toBe(t("en", "close"));
-    await press("close");
-    expect(core.ft.close).toHaveBeenCalled();
+    expect(button("close")).toBeNull();
+    expect(element.querySelector("ion-header")).toBeNull();
+  });
+
+  it("draws in the page, in ion-content, its buttons Ionic's", async () => {
+    await mount(async () => null);
+    expect(element.shadowRoot).toBe(null);
+    expect(element.querySelector(":scope > ion-content ion-button[data-act='send']")).toBeTruthy();
+    expect(element.querySelector(":scope > ion-content .hint").textContent).toBe(t("en", "privacy"));
+    await press("send");
+    expect(element.querySelector("ion-content ion-button[data-act='retry']")).toBeTruthy();
+    expect(element.querySelector("button")).toBeNull();
+  });
+
+  // Ionic draws a button once; drawing it again on every change would flash it.
+  it("keeps the big button while it looks for the phone, waits with Ionic's spinner, and speaks a new language in place", async () => {
+    const answer = later();
+    await mount(() => answer.promise);
+    const send = button("send");
+    await press("send");
+    expect(button("send")).toBe(send);
+    expect(element.querySelector("[role='status'] ion-spinner")).toBeTruthy();
+    answer.resolve(HERE);
+    await tick();
+    await tick();
+    expect(button("send")).toBe(send);
+    expect(element.querySelector("ion-spinner")).toBeNull();
+    await core.open({ lang: "es" });
+    expect(button("send")).toBe(send);
+    expect(send.getAttribute("aria-label")).toBe(t("es", "send"));
+    expect(send.textContent).toContain(t("es", "send"));
+  });
+
+  // The icons are the app's, never an emoji: Ionic's own when the app lent them by name, else the
+  // ones it serves.
+  it("draws an Ionicon the app lent by name with ion-icon, and the one it serves otherwise", async () => {
+    await mount(async () => HERE);
+    expect(element.querySelector('[data-act="send"] ion-icon')).toBe(null);
+    expect(element.querySelector('[data-act="send"] .ft-i').getAttribute("style")).toContain("./icon/location-outline.svg");
+    expect(element.querySelector('[data-act="send"]').textContent).not.toContain("📍");
+
+    globalThis.Ionicons = { map: new Map([["location-outline", "data:image/svg+xml;utf8,<svg></svg>"]]) };
+    await mount(async () => HERE);
+    expect(element.querySelector('[data-act="send"] ion-icon').getAttribute("name")).toBe("location-outline");
+  });
+
+  afterEach(() => {
+    delete globalThis.Ionicons;
+  });
+});
+
+describe("the package", () => {
+  const dist = join(import.meta.dirname, "dist");
+  const files = readdirSync(dist);
+
+  // Only an app that lends Ionic can show it (app 1.6.0): an older one keeps the version it has.
+  it("asks for an app that lends Ionic", () => {
+    expect(JSON.parse(readFileSync(join(import.meta.dirname, "module.json"), "utf8")).minCoreVersion).toBe("1.6.0");
+  });
+
+  // Ionic is the app's, lent to the frame: a copy in the package would be a second one, and heavy.
+  it("carries no Ionic of its own", () => {
+    for (const file of files) {
+      const code = readFileSync(join(dist, file), "utf8");
+      expect(code, file).not.toMatch(/@ionic\/core|ionicframework|stencil|defineCustomElement|__registerHost/i);
+      expect(code, file).not.toMatch(/^\s*import\s.*from\s+["'](?!\.\/)/m);
+    }
+  });
+
+  // The app carries it as a seed on iOS: 128 KiB at most (plugin-sdk).
+  it("is small enough to be a seed", () => {
+    const bytes = files.reduce((sum, file) => sum + statSync(join(dist, file)).size, 0);
+    expect(bytes).toBeLessThanOrEqual(128 * 1024);
   });
 });
 
